@@ -824,10 +824,14 @@
               time: timeInfo.normalized,
               speed,
             }, row);
+            updateRowLabels();
           }
         });
 
-        addButton.addEventListener("click", addInterval);
+        addButton.addEventListener("click", () => {
+          addInterval();
+          updateRowLabels();
+        });
         resetButton.addEventListener("click", resetIntervals);
 
         if (!loadIntervals()) {
