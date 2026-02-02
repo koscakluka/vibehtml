@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vibehtml - tiny HTML experiments</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg-top: #f8f3ea;
+        --bg-bottom: #e8eef5;
+        --ink: #1f1a14;
+        --ink-muted: #5e5146;
+        --accent: #d9713f;
+        --accent-deep: #8c3e21;
+        --card: rgba(255, 255, 255, 0.8);
+        --border: rgba(31, 26, 20, 0.12);
+        --shadow: 0 18px 40px rgba(31, 26, 20, 0.12);
+        --radius: 22px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Gill Sans", "Trebuchet MS", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 700px at 12% 15%, #ffe2cc 0%, transparent 60%),
+          radial-gradient(900px 600px at 90% 10%, #d9e7ff 0%, transparent 62%),
+          linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+        position: relative;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          repeating-linear-gradient(
+            120deg,
+            rgba(31, 26, 20, 0.03) 0px,
+            rgba(31, 26, 20, 0.03) 1px,
+            transparent 1px,
+            transparent 12px
+          );
+        opacity: 0.5;
+        pointer-events: none;
+      }
+
+      .glow {
+        position: absolute;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        filter: blur(0px);
+        opacity: 0.5;
+        z-index: 0;
+      }
+
+      .glow.one {
+        top: -120px;
+        left: -80px;
+        background: radial-gradient(circle, rgba(217, 113, 63, 0.25), transparent 70%);
+      }
+
+      .glow.two {
+        bottom: -140px;
+        right: -80px;
+        background: radial-gradient(circle, rgba(40, 93, 140, 0.24), transparent 70%);
+      }
+
+      .site-header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 32px 8vw 16px;
+      }
+
+      .wordmark {
+        font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        font-size: 1.4rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .meta {
+        font-size: 0.95rem;
+        color: var(--ink-muted);
+      }
+
+      .main {
+        position: relative;
+        z-index: 1;
+        padding: 20px 8vw 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .hero {
+        max-width: 720px;
+      }
+
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.75rem;
+        color: var(--accent-deep);
+      }
+
+      h1 {
+        font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        font-size: clamp(2.2rem, 4vw, 3.4rem);
+        line-height: 1.1;
+        margin: 12px 0;
+      }
+
+      .lead {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--ink-muted);
+        max-width: 560px;
+      }
+
+      .status {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .status-item {
+        padding: 12px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.75);
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        font-size: 0.9rem;
+      }
+
+      .status-item span {
+        font-weight: 600;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+      }
+
+      .card {
+        background: var(--card);
+        border-radius: var(--radius);
+        padding: 20px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(6px);
+      }
+
+      .card h2 {
+        margin: 0 0 8px;
+        font-size: 1.1rem;
+      }
+
+      .card p {
+        margin: 0;
+        color: var(--ink-muted);
+        line-height: 1.5;
+      }
+
+      .log {
+        display: grid;
+        gap: 12px;
+        padding: 24px;
+        border-radius: var(--radius);
+        border: 1px dashed rgba(31, 26, 20, 0.25);
+        background: rgba(255, 255, 255, 0.65);
+      }
+
+      .log h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .file-hint {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 12px;
+        border-radius: 12px;
+        background: rgba(217, 113, 63, 0.12);
+        font-size: 0.85rem;
+      }
+
+      .file-hint span:first-child {
+        font-weight: 600;
+      }
+
+      .site-footer {
+        position: relative;
+        z-index: 1;
+        padding: 0 8vw 32px;
+        color: var(--ink-muted);
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .reveal {
+        opacity: 0;
+        transform: translateY(14px);
+        transition: opacity 0.8s ease, transform 0.8s ease;
+      }
+
+      .reveal.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 720px) {
+        .site-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 6px;
+        }
+
+        .site-footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .status {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .reveal {
+          transition: none;
+          transform: none;
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="glow one" aria-hidden="true"></div>
+    <div class="glow two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <div class="wordmark">vibehtml</div>
+      <div class="meta">personal scratchpad for tiny HTML experiments</div>
+    </header>
+
+    <main class="main">
+      <section class="hero reveal">
+        <p class="eyebrow">Minimal. Quick. Yours.</p>
+        <h1>One-off HTML pages with zero ceremony.</h1>
+        <p class="lead">
+          This repo is a place to sketch interfaces, test ideas, and stash small UI
+          experiments. Open a file, make a thing, publish it instantly.
+        </p>
+        <div class="status" aria-label="Repo status">
+          <div class="status-item">Local time: <span id="local-time">--:--</span></div>
+          <div class="status-item">Build step: <span>none</span></div>
+          <div class="status-item">Hosting: <span>GitHub Pages</span></div>
+        </div>
+      </section>
+
+      <section class="grid" aria-label="Core ideas">
+        <article class="card reveal">
+          <h2>Lightweight by design</h2>
+          <p>Plain HTML + CSS + a pinch of JS. No framework assumptions.</p>
+        </article>
+        <article class="card reveal">
+          <h2>Fast to iterate</h2>
+          <p>Make a file, refresh the browser, keep moving.</p>
+        </article>
+        <article class="card reveal">
+          <h2>Made to wander</h2>
+          <p>Everything lives at repo root for easy access and quick sharing.</p>
+        </article>
+      </section>
+
+      <section class="log reveal" aria-label="Working notes">
+        <h2>Start here</h2>
+        <p>
+          Add a new file alongside this one and link it as needed. Keep it simple,
+          keep it playful.
+        </p>
+        <div class="file-hint">
+          <span>index.html</span>
+          <span>repo landing page</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div>Scratchpad mode, always on.</div>
+      <div>Open a file and ship a thought.</div>
+    </footer>
+
+    <script>
+      (function () {
+        const timeEl = document.querySelector("#local-time");
+        const revealEls = Array.from(document.querySelectorAll(".reveal"));
+
+        if (timeEl) {
+          const updateTime = () => {
+            const now = new Date();
+            timeEl.textContent = now.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          };
+          updateTime();
+          window.setInterval(updateTime, 60000);
+        }
+
+        revealEls.forEach((el, index) => {
+          const delay = 120 * index;
+          window.setTimeout(() => {
+            el.classList.add("is-visible");
+          }, delay);
+        });
+      })();
+    </script>
+  </body>
+</html>
