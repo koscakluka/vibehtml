@@ -925,33 +925,12 @@
           const params = new URLSearchParams(window.location.search);
           const shared = params.get(SHARE_PARAM);
           const decoded = shared ? decodeIntervals(shared) : null;
-          if (decoded && Array.isArray(decoded.runs) && decoded.runs.length) {
-            runs = decoded.runs.map((run, index) => ({
-              id: run.id || crypto.randomUUID(),
-              name: run.name || `Run ${index + 1}`,
-              intervals: Array.isArray(run.intervals) ? run.intervals : [],
-            }));
-            activeRunId = decoded.activeRunId && runs.some((run) => run.id === decoded.activeRunId)
-              ? decoded.activeRunId
-              : runs[0].id;
-            updateRunSelect();
-            setActiveRun(activeRunId);
-            return true;
-          }
           const saved = storage.load();
-          if (!saved) {
-            return false;
-          }
           if (Array.isArray(saved)) {
             const run = createRun("Run 1", saved);
             runs = [run];
             activeRunId = run.id;
-            updateRunSelect();
-            setActiveRun(activeRunId);
-            storage.save({ runs, activeRunId });
-            return true;
-          }
-          if (Array.isArray(saved.runs) && saved.runs.length) {
+          } else if (saved && Array.isArray(saved.runs) && saved.runs.length) {
             runs = saved.runs.map((run, index) => ({
               id: run.id || crypto.randomUUID(),
               name: run.name || `Run ${index + 1}`,
@@ -960,11 +939,46 @@
             activeRunId = saved.activeRunId && runs.some((run) => run.id === saved.activeRunId)
               ? saved.activeRunId
               : runs[0].id;
-            updateRunSelect();
-            setActiveRun(activeRunId);
-            return true;
           }
-          return false;
+
+          if (decoded && Array.isArray(decoded.runs) && decoded.runs.length) {
+            const sharedRuns = decoded.runs.map((run, index) => ({
+              id: run.id || crypto.randomUUID(),
+              name: run.name || `Shared run ${index + 1}`,
+              intervals: Array.isArray(run.intervals) ? run.intervals : [],
+            }));
+            const nextRuns = runs.length ? [...runs] : [];
+            sharedRuns.forEach((sharedRun) => {
+              const existingIndex = nextRuns.findIndex((run) => run.id === sharedRun.id);
+              if (existingIndex >= 0) {
+                const shouldReplace = window.confirm(
+                  `A run named "${nextRuns[existingIndex].name}" already exists. Replace it with the shared run?`
+                );
+                if (shouldReplace) {
+                  nextRuns[existingIndex] = sharedRun;
+                  activeRunId = sharedRun.id;
+                }
+                return;
+              }
+              nextRuns.push(sharedRun);
+              if (!activeRunId) {
+                activeRunId = sharedRun.id;
+              }
+            });
+            runs = nextRuns;
+            activeRunId = sharedRuns[0]?.id ?? activeRunId;
+            const cleanedUrl = new URL(window.location.href);
+            cleanedUrl.searchParams.delete(SHARE_PARAM);
+            window.history.replaceState({}, "", cleanedUrl);
+          }
+
+          if (!runs.length) {
+            return false;
+          }
+          updateRunSelect();
+          setActiveRun(activeRunId || runs[0].id);
+          storage.save({ runs, activeRunId });
+          return true;
         };
 
         intervalsEl.addEventListener("input", (event) => {
@@ -1163,7 +1177,12 @@
 
         shareButton.addEventListener("click", async () => {
           persistActiveRun();
-          const encoded = encodeIntervals({ runs, activeRunId });
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            shareStatusEl.textContent = "Pick a run before sharing.";
+            return;
+          }
+          const encoded = encodeIntervals({ runs: [activeRun], activeRunId: activeRun.id });
           if (!encoded) {
             shareStatusEl.textContent = "Unable to create a shareable link.";
             return;
