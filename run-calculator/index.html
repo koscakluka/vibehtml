@@ -18,6 +18,8 @@
         --success: #2f6b4f;
         --shadow: 0 20px 50px rgba(39, 29, 18, 0.12);
         --radius: 20px;
+        --control-height: 40px;
+        --control-padding: 10px 14px;
       }
 
       * {
@@ -81,13 +83,13 @@
         letter-spacing: 0.18em;
         font-size: 0.72rem;
         color: var(--muted);
-        margin: 0 0 12px;
+        margin: 0 0 10px;
       }
 
       h1 {
-        margin: 0 0 12px;
-        font-size: clamp(2rem, 3vw, 2.6rem);
-        line-height: 1.1;
+        margin: 0 0 14px;
+        font-size: clamp(2.1rem, 3vw, 2.7rem);
+        line-height: 1.08;
       }
 
       .hero p {
@@ -110,7 +112,8 @@
       }
 
       .summary h2 {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
+        letter-spacing: 0.02em;
         margin: 0;
       }
 
@@ -175,6 +178,7 @@
       .panel-header h2 {
         margin: 0;
         font-size: 1.3rem;
+        letter-spacing: 0.01em;
       }
 
       .actions {
@@ -237,9 +241,14 @@
         border: 1px solid var(--accent);
         background: var(--accent);
         color: #fff;
-        padding: 10px 16px;
+        padding: var(--control-padding);
         cursor: pointer;
         font-size: 0.95rem;
+        min-height: var(--control-height);
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         transition: transform 150ms ease, box-shadow 150ms ease;
       }
 
@@ -292,22 +301,16 @@
         letter-spacing: 0.1em;
       }
 
-      input {
-        font-family: inherit;
-        padding: 6px 8px;
-        border-radius: 12px;
-        border: 1px solid var(--stroke);
-        background: #fdfbf7;
-        font-size: 0.9rem;
-      }
-
+      input,
       select {
         font-family: inherit;
-        padding: 6px 8px;
+        padding: 8px 10px;
         border-radius: 12px;
         border: 1px solid var(--stroke);
         background: #fdfbf7;
         font-size: 0.9rem;
+        min-height: var(--control-height);
+        line-height: 1.1;
       }
 
       input:focus-visible {
@@ -316,10 +319,14 @@
       }
 
       .distance-output {
-        padding: 6px 8px;
+        padding: 8px 10px;
         border-radius: 12px;
         border: 1px dashed var(--stroke);
         background: #fffaf3;
+        min-height: var(--control-height);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
       }
 
       .distance-output .value {
@@ -352,7 +359,8 @@
         align-items: center;
         justify-content: center;
         gap: 0;
-        min-width: 36px;
+        min-width: var(--control-height);
+        padding: 0;
       }
 
       .icon-button svg {
@@ -479,12 +487,10 @@
           <div class="run-controls">
             <div class="run-fields">
               <div class="field run-select">
-                <label for="run-select">Run selection</label>
                 <select id="run-select" aria-label="Select run"></select>
               </div>
               <div class="field run-name-input">
-                <label for="run-name">Run name</label>
-                <input id="run-name" type="text" placeholder="Run name" />
+                <input id="run-name" type="text" placeholder="Run name" aria-label="Run name" />
               </div>
               <button
                 type="button"
@@ -500,13 +506,38 @@
               </button>
             </div>
             <div class="actions">
-              <button type="button" id="add-run" class="secondary">Add run</button>
-              <button type="button" id="remove-run" class="secondary">Remove run</button>
+              <button
+                type="button"
+                id="add-run"
+                class="secondary icon-button"
+                aria-label="Add run"
+                title="Add run"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                id="remove-run"
+                class="secondary icon-button"
+                aria-label="Remove run"
+                title="Remove run"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <polyline points="3 6 21 6" />
+                  <path d="M8 6V4h8v2" />
+                  <rect x="6" y="6" width="12" height="14" rx="2" ry="2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
         <div class="panel-header">
-          <h2>Your intervals</h2>
+          <h2>Intervals</h2>
           <div class="actions">
             <button type="button" class="icon-button" id="add-interval" aria-label="Add interval" title="Add interval">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -809,8 +840,11 @@
                 title="Remove interval"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
+                  <polyline points="3 6 21 6" />
+                  <path d="M8 6V4h8v2" />
+                  <rect x="6" y="6" width="12" height="14" rx="2" ry="2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
                 </svg>
               </button>
             </div>
