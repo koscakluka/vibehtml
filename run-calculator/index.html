@@ -436,6 +436,7 @@
         const resetButton = document.getElementById("reset-intervals");
         const totalDistanceEl = document.getElementById("total-distance");
         const totalTimeEl = document.getElementById("total-time");
+        const STORAGE_KEY = "run-calculator-intervals";
 
         if (
           !intervalsEl ||
@@ -448,6 +449,35 @@
         }
 
         let intervalCount = 0;
+        let isRestoring = false;
+
+        const storage = {
+          load() {
+            try {
+              const raw = localStorage.getItem(STORAGE_KEY);
+              if (!raw) {
+                return null;
+              }
+              return JSON.parse(raw);
+            } catch (error) {
+              return null;
+            }
+          },
+          save(data) {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (error) {
+              return;
+            }
+          },
+          clear() {
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+            } catch (error) {
+              return;
+            }
+          },
+        };
 
         const formatTime = (totalSeconds) => {
           const safeSeconds = Math.max(0, Math.round(totalSeconds));
@@ -581,6 +611,21 @@
           });
         };
 
+        const collectIntervals = () =>
+          Array.from(intervalsEl.querySelectorAll(".interval-row")).map((row) => {
+            const nameInput = row.querySelector('[data-field="name"]');
+            const timeInput = row.querySelector('[data-field="time"]');
+            const speedInput = row.querySelector('[data-field="speed"]');
+            return {
+              name: nameInput instanceof HTMLInputElement ? nameInput.value : "",
+              time: timeInput instanceof HTMLInputElement ? timeInput.value : "00:00",
+              speed: sanitizeNumber(
+                speedInput instanceof HTMLInputElement ? speedInput.value : "0",
+                0
+              ),
+            };
+          });
+
         const updateTotals = () => {
           const rows = Array.from(intervalsEl.querySelectorAll(".interval-row"));
           let totalSeconds = 0;
@@ -612,6 +657,9 @@
 
           totalDistanceEl.textContent = formatDistance(totalDistance);
           totalTimeEl.textContent = formatTime(totalSeconds);
+          if (!isRestoring) {
+            storage.save(collectIntervals());
+          }
         };
 
         const addInterval = (values = null, insertAfter = null) => {
@@ -643,8 +691,24 @@
         const resetIntervals = () => {
           intervalsEl.innerHTML = "";
           intervalCount = 0;
+          storage.clear();
           addInterval();
           addInterval();
+        };
+
+        const loadIntervals = () => {
+          const saved = storage.load();
+          if (!Array.isArray(saved) || saved.length === 0) {
+            return false;
+          }
+          intervalsEl.innerHTML = "";
+          intervalCount = 0;
+          isRestoring = true;
+          saved.forEach((interval) => addInterval(interval));
+          isRestoring = false;
+          updateRowLabels();
+          updateTotals();
+          return true;
         };
 
         intervalsEl.addEventListener("input", (event) => {
@@ -715,6 +779,7 @@
           }
           updateRowLabels();
           clearDropIndicators();
+          updateTotals();
         });
 
         intervalsEl.addEventListener("dragend", () => {
@@ -765,7 +830,9 @@
         addButton.addEventListener("click", addInterval);
         resetButton.addEventListener("click", resetIntervals);
 
-        resetIntervals();
+        if (!loadIntervals()) {
+          resetIntervals();
+        }
       })();
     </script>
   </body>
