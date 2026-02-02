@@ -4,7 +4,7 @@
   const runSelect = document.getElementById("run-select");
   const runNameInput = document.getElementById("run-name");
   const renameRunButton = document.getElementById("rename-run");
-  const runFields = document.querySelector(".run-fields");
+  const runFields = document.querySelector("[data-run-fields]");
   const addRunButton = document.getElementById("add-run");
   const removeRunButton = document.getElementById("remove-run");
   const shareButton = document.getElementById("share-run");
@@ -185,19 +185,21 @@
   const buildRow = () => {
     intervalCount += 1;
     const row = document.createElement("div");
-    row.className = "interval-row";
+    row.className = "grid grid-cols-intervals gap-2 items-end p-2 rounded-xl border border-stroke bg-surface animate-rise";
     row.style.animationDelay = `${intervalCount * 70}ms`;
     row.dataset.index = String(intervalCount);
+    row.dataset.intervalRow = "true";
     row.innerHTML = `
-      <div class="row-actions">
+      <div class="flex flex-row items-center gap-1">
         <button
           type="button"
-          class="drag-handle icon-button"
+          class="inline-flex items-center justify-center rounded-full min-w-10 h-10 p-0 border border-transparent bg-transparent text-muted cursor-grab active-grabbing font-inherit"
           draggable="true"
           aria-label="Drag to reorder"
           title="Drag to reorder"
+          data-drag-handle
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="8" cy="6" r="1.6" fill="currentColor" stroke="none" />
             <circle cx="16" cy="6" r="1.6" fill="currentColor" stroke="none" />
             <circle cx="8" cy="12" r="1.6" fill="currentColor" stroke="none" />
@@ -207,56 +209,66 @@
           </svg>
         </button>
       </div>
-      <div class="field interval-name">
-        <label for="name-${intervalCount}">Interval name</label>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs uppercase tracking-wide text-muted" for="name-${intervalCount}">Interval name</label>
         <input
           id="name-${intervalCount}"
           data-field="name"
+          class="w-full font-inherit bg-input border border-stroke rounded-lg px-2-5 py-2 text-sm min-h-10 font-semibold focus-ring"
           type="text"
           placeholder="Interval ${intervalCount}"
           value="Interval ${intervalCount}"
         />
       </div>
-      <div class="field">
-        <label for="time-${intervalCount}">Time (mm:ss)</label>
+      <div class="flex flex-col gap-1">
+        <label class="text-xs uppercase tracking-wide text-muted" for="time-${intervalCount}">Time (mm:ss)</label>
         <input
           id="time-${intervalCount}"
           data-field="time"
+          class="w-full font-inherit bg-input border border-stroke rounded-lg px-2-5 py-2 text-sm min-h-10 focus-ring"
           type="text"
           inputmode="numeric"
           placeholder="mm:ss"
           value="00:00"
         />
       </div>
-      <div class="field">
-        <label for="speed-${intervalCount}">Speed (km/h)</label>
-        <input id="speed-${intervalCount}" data-field="speed" type="number" min="0" step="0.1" value="0" />
+      <div class="flex flex-col gap-1">
+        <label class="text-xs uppercase tracking-wide text-muted" for="speed-${intervalCount}">Speed (km/h)</label>
+        <input
+          id="speed-${intervalCount}"
+          data-field="speed"
+          class="w-full font-inherit bg-input border border-stroke rounded-lg px-2-5 py-2 text-sm min-h-10 focus-ring"
+          type="number"
+          min="0"
+          step="0.1"
+          value="0"
+        />
       </div>
-      <div class="field distance-output">
-        <span class="label">Distance</span>
-        <span class="value" data-field="distance">0.00 km</span>
+      <div class="border border-dashed border-stroke rounded-lg bg-distance min-h-10 px-2-5 py-2 flex flex-col justify-center">
+        <span class="text-xs uppercase tracking-wide text-muted">Distance</span>
+        <span class="text-lg font-semibold" data-field="distance">0.00 km</span>
       </div>
-      <div class="row-actions">
+      <div class="flex flex-row items-center gap-1">
         <button
           type="button"
-          class="secondary icon-button"
+          class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
           data-action="duplicate"
           aria-label="Duplicate interval"
           title="Duplicate interval"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
           </svg>
         </button>
         <button
           type="button"
-          class="remove-btn icon-button"
+          class="inline-flex items-center justify-center rounded-full border border-transparent bg-soft text-muted min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
           data-action="remove"
           aria-label="Remove interval"
           title="Remove interval"
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
             <polyline points="3 6 21 6" />
             <path d="M8 6V4h8v2" />
             <rect x="6" y="6" width="12" height="14" rx="2" ry="2" />
@@ -270,7 +282,7 @@
   };
 
   const updateRowLabels = () => {
-    const rows = Array.from(intervalsEl.querySelectorAll(".interval-row"));
+    const rows = Array.from(intervalsEl.querySelectorAll("[data-interval-row]"));
     rows.forEach((row, index) => {
       const nameInput = row.querySelector('[data-field="name"]');
       const nextLabel = `Interval ${index + 1}`;
@@ -285,7 +297,7 @@
   };
 
   const collectIntervals = () =>
-    Array.from(intervalsEl.querySelectorAll(".interval-row")).map((row) => {
+    Array.from(intervalsEl.querySelectorAll("[data-interval-row]")).map((row) => {
       const nameInput = row.querySelector('[data-field="name"]');
       const timeInput = row.querySelector('[data-field="time"]');
       const speedInput = row.querySelector('[data-field="speed"]');
@@ -300,7 +312,7 @@
     });
 
   const updateTotals = () => {
-    const rows = Array.from(intervalsEl.querySelectorAll(".interval-row"));
+    const rows = Array.from(intervalsEl.querySelectorAll("[data-interval-row]"));
     let totalSeconds = 0;
     let totalDistance = 0;
 
@@ -442,8 +454,8 @@
 
   const clearDropIndicators = () => {
     intervalsEl
-      .querySelectorAll(".drop-before, .drop-after")
-      .forEach((row) => row.classList.remove("drop-before", "drop-after"));
+      .querySelectorAll(".shadow-drop-before, .shadow-drop-after")
+      .forEach((row) => row.classList.remove("shadow-drop-before", "shadow-drop-after"));
   };
 
   intervalsEl.addEventListener("dragstart", (event) => {
@@ -451,16 +463,16 @@
     if (!(target instanceof Element)) {
       return;
     }
-    const handle = target.closest(".drag-handle");
+    const handle = target.closest("[data-drag-handle]");
     if (!handle) {
       return;
     }
-    const row = handle.closest(".interval-row");
+    const row = handle.closest("[data-interval-row]");
     if (!row) {
       return;
     }
     draggingRow = row;
-    row.classList.add("is-dragging");
+    row.classList.add("opacity-60", "shadow-drag");
     if (event.dataTransfer) {
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", "");
@@ -475,14 +487,14 @@
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = "move";
     }
-    const target = event.target instanceof Element ? event.target.closest(".interval-row") : null;
+    const target = event.target instanceof Element ? event.target.closest("[data-interval-row]") : null;
     clearDropIndicators();
     if (!target || target === draggingRow) {
       return;
     }
     const rect = target.getBoundingClientRect();
     const shouldInsertBefore = event.clientY < rect.top + rect.height / 2;
-    target.classList.add(shouldInsertBefore ? "drop-before" : "drop-after");
+    target.classList.add(shouldInsertBefore ? "shadow-drop-before" : "shadow-drop-after");
   });
 
   intervalsEl.addEventListener("drop", (event) => {
@@ -490,7 +502,7 @@
       return;
     }
     event.preventDefault();
-    const target = event.target instanceof Element ? event.target.closest(".interval-row") : null;
+    const target = event.target instanceof Element ? event.target.closest("[data-interval-row]") : null;
     if (!target) {
       intervalsEl.appendChild(draggingRow);
     } else if (target !== draggingRow) {
@@ -505,7 +517,7 @@
 
   intervalsEl.addEventListener("dragend", () => {
     if (draggingRow) {
-      draggingRow.classList.remove("is-dragging");
+      draggingRow.classList.remove("opacity-60", "shadow-drag");
     }
     clearDropIndicators();
     draggingRow = null;
@@ -521,7 +533,7 @@
       return;
     }
     if (actionButton.dataset.action === "remove") {
-      const row = actionButton.closest(".interval-row");
+    const row = actionButton.closest("[data-interval-row]");
       if (row) {
         row.remove();
         updateRowLabels();
@@ -529,7 +541,7 @@
       }
     }
     if (actionButton.dataset.action === "duplicate") {
-      const row = actionButton.closest(".interval-row");
+      const row = actionButton.closest("[data-interval-row]");
       if (!row) {
         return;
       }
@@ -600,7 +612,7 @@
       return;
     }
     runNameInput.value = activeRun.name || "";
-    runFields.classList.add("is-renaming");
+    runFields.dataset.renaming = "true";
     runNameInput.focus();
     runNameInput.select();
   };
@@ -614,7 +626,7 @@
     if (nextName) {
       activeRun.name = nextName;
     }
-    runFields.classList.remove("is-renaming");
+    delete runFields.dataset.renaming;
     updateRunSelect();
     storage.save({ runs, activeRunId });
   };

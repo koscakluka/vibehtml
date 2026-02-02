@@ -7,64 +7,75 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <main>
-      <header class="hero">
+    <main class="relative z-10 max-w-screen-lg mx-auto px-6 py-12 flex flex-col gap-8">
+      <header class="grid grid-cols-hero gap-6 items-center animate-rise">
         <div>
-          <p class="eyebrow">Run calculator</p>
-          <h1>Plan interval runs without the math.</h1>
-          <p>
+          <p class="uppercase tracking-widest text-xs text-muted mb-2">Run calculator</p>
+          <h1 class="text-3xl leading-tight mb-3">Plan interval runs without the math.</h1>
+          <p class="text-lg text-muted">
             Add each interval with its duration and speed. The totals update instantly so you can spot
             the full distance and total run time.
           </p>
         </div>
       </header>
 
-      <section class="summary" aria-live="polite">
-        <h2>Total output</h2>
-        <div class="summary-grid">
-          <div class="metric">
-            <span class="label">Total distance</span>
-            <span class="value" id="total-distance">0.00 km</span>
+      <section class="sticky top-4 z-10 bg-panel border border-stroke rounded-2xl p-5 shadow-panel grid gap-3" aria-live="polite">
+        <h2 class="text-lg tracking-tight m-0">Total output</h2>
+        <div class="grid grid-cols-summary gap-3">
+          <div class="p-3 rounded-xl bg-surface border border-stroke">
+            <span class="block text-xs uppercase tracking-wide text-muted mb-1">Total distance</span>
+            <span class="block text-xl font-semibold text-success" id="total-distance">0.00 km</span>
           </div>
-          <div class="metric">
-            <span class="label">Total time</span>
-            <span class="value" id="total-time">00:00:00</span>
+          <div class="p-3 rounded-xl bg-surface border border-stroke">
+            <span class="block text-xs uppercase tracking-wide text-muted mb-1">Total time</span>
+            <span class="block text-xl font-semibold text-success" id="total-time">00:00:00</span>
           </div>
         </div>
       </section>
 
-      <section class="panel intervals-panel" aria-label="Intervals list">
-        <div class="runs-panel" aria-label="Runs">
-          <div class="run-controls">
-            <div class="run-fields">
-              <div class="field run-select">
-                <select id="run-select" aria-label="Select run"></select>
+      <section class="bg-panel border border-stroke rounded-2xl p-6 shadow-panel grid gap-4" aria-label="Intervals list">
+        <div class="pb-4 border-b border-stroke" aria-label="Runs">
+          <div class="grid grid-cols-run-controls gap-3 items-end">
+            <div class="grid grid-cols-run-fields gap-2 items-end" data-run-fields>
+              <div data-run-select>
+                <select
+                  id="run-select"
+                  class="w-full font-inherit bg-input border border-stroke rounded-lg px-2-5 py-2 text-sm min-h-10 focus-ring"
+                  aria-label="Select run"
+                ></select>
               </div>
-              <div class="field run-name-input">
-                <input id="run-name" type="text" placeholder="Run name" aria-label="Run name" />
+              <div data-run-name>
+                <input
+                  id="run-name"
+                  class="w-full font-inherit bg-input border border-stroke rounded-lg px-2-5 py-2 text-sm min-h-10 focus-ring"
+                  type="text"
+                  placeholder="Run name"
+                  aria-label="Run name"
+                />
               </div>
               <button
                 type="button"
                 id="rename-run"
-                class="secondary icon-button"
+                class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
                 aria-label="Rename run"
                 title="Rename run"
+                data-rename-button
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                 </svg>
               </button>
             </div>
-            <div class="actions">
+            <div class="flex gap-2 flex-wrap justify-end">
               <button
                 type="button"
                 id="add-run"
-                class="secondary icon-button"
+                class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
                 aria-label="Add run"
                 title="Add run"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <line x1="12" y1="5" x2="12" y2="19" />
                   <line x1="5" y1="12" x2="19" y2="12" />
                 </svg>
@@ -72,11 +83,11 @@
               <button
                 type="button"
                 id="remove-run"
-                class="secondary icon-button"
+                class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
                 aria-label="Remove run"
                 title="Remove run"
               >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                   <polyline points="3 6 21 6" />
                   <path d="M8 6V4h8v2" />
                   <rect x="6" y="6" width="12" height="14" rx="2" ry="2" />
@@ -87,23 +98,29 @@
             </div>
           </div>
         </div>
-        <div class="panel-header">
-          <h2>Intervals</h2>
-          <div class="actions">
-            <button type="button" class="icon-button" id="add-interval" aria-label="Add interval" title="Add interval">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+        <div class="flex items-center justify-between flex-wrap gap-3">
+          <h2 class="m-0 text-2xl tracking-normal">Intervals</h2>
+          <div class="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center rounded-full border border-accent bg-accent text-white min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
+              id="add-interval"
+              aria-label="Add interval"
+              title="Add interval"
+            >
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             </button>
             <button
               type="button"
-              class="secondary icon-button"
+              class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
               id="share-run"
               aria-label="Share run"
               title="Share run"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <circle cx="18" cy="5" r="3" />
                 <circle cx="6" cy="12" r="3" />
                 <circle cx="18" cy="19" r="3" />
@@ -113,21 +130,23 @@
             </button>
             <button
               type="button"
-              class="secondary icon-button"
+              class="inline-flex items-center justify-center rounded-full border border-accent bg-transparent text-accent min-w-10 h-10 p-0 transition hover-raise hover-shadow focus-ring font-inherit"
               id="reset-intervals"
               aria-label="Reset intervals"
               title="Reset intervals"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 <polyline points="1 4 1 10 7 10" />
                 <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
               </svg>
             </button>
           </div>
         </div>
-        <div class="share-status" id="share-status" role="status" aria-live="polite"></div>
-        <div class="intervals" id="intervals"></div>
-        <p class="note">Tip: drag the grip to reorder; time uses mm:ss (seconds capped at 59); speed is in kilometers per hour.</p>
+        <div class="text-xs text-muted min-h-5" id="share-status" role="status" aria-live="polite" data-share-status></div>
+        <div class="grid gap-4" id="intervals"></div>
+        <p class="m-0 text-base text-muted">
+          Tip: drag the grip to reorder; time uses mm:ss (seconds capped at 59); speed is in kilometers per hour.
+        </p>
       </section>
     </main>
 
