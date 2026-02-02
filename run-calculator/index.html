@@ -155,6 +155,15 @@
         gap: 20px;
       }
 
+      .intervals-panel {
+        gap: 14px;
+      }
+
+      .runs-panel {
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--stroke);
+      }
+
       .panel-header {
         display: flex;
         align-items: center;
@@ -174,10 +183,52 @@
         flex-wrap: wrap;
       }
 
+      .run-controls {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        align-items: end;
+      }
+
+      .run-fields {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(200px, 1fr) auto;
+        align-items: end;
+      }
+
+      .run-fields.is-renaming {
+        grid-template-columns: minmax(200px, 1fr);
+      }
+
+      .run-fields.is-renaming #rename-run {
+        display: none;
+      }
+
+      .run-fields .run-name-input {
+        display: none;
+      }
+
+      .run-fields.is-renaming .run-select {
+        display: none;
+      }
+
+      .run-fields.is-renaming .run-name-input {
+        display: flex;
+      }
+
+      .run-controls .actions {
+        justify-content: flex-end;
+      }
+
       .share-status {
         font-size: 0.78rem;
         color: var(--muted);
         min-height: 1.1rem;
+      }
+
+      .intervals-panel .share-status:empty {
+        display: none;
       }
 
       button {
@@ -242,6 +293,15 @@
       }
 
       input {
+        font-family: inherit;
+        padding: 6px 8px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: #fdfbf7;
+        font-size: 0.9rem;
+      }
+
+      select {
         font-family: inherit;
         padding: 6px 8px;
         border-radius: 12px;
@@ -365,6 +425,14 @@
           padding: 32px 18px 48px;
         }
 
+        .run-controls {
+          grid-template-columns: 1fr;
+        }
+
+        .run-fields {
+          grid-template-columns: 1fr;
+        }
+
         .interval-row {
           grid-template-columns: 1fr;
         }
@@ -406,7 +474,37 @@
         </div>
       </section>
 
-      <section class="panel" aria-label="Intervals list">
+      <section class="panel intervals-panel" aria-label="Intervals list">
+        <div class="runs-panel" aria-label="Runs">
+          <div class="run-controls">
+            <div class="run-fields">
+              <div class="field run-select">
+                <label for="run-select">Run selection</label>
+                <select id="run-select" aria-label="Select run"></select>
+              </div>
+              <div class="field run-name-input">
+                <label for="run-name">Run name</label>
+                <input id="run-name" type="text" placeholder="Run name" />
+              </div>
+              <button
+                type="button"
+                id="rename-run"
+                class="secondary icon-button"
+                aria-label="Rename run"
+                title="Rename run"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                </svg>
+              </button>
+            </div>
+            <div class="actions">
+              <button type="button" id="add-run" class="secondary">Add run</button>
+              <button type="button" id="remove-run" class="secondary">Remove run</button>
+            </div>
+          </div>
+        </div>
         <div class="panel-header">
           <h2>Your intervals</h2>
           <div class="actions">
@@ -455,6 +553,12 @@
       (() => {
         const intervalsEl = document.getElementById("intervals");
         const addButton = document.getElementById("add-interval");
+        const runSelect = document.getElementById("run-select");
+        const runNameInput = document.getElementById("run-name");
+        const renameRunButton = document.getElementById("rename-run");
+        const runFields = document.querySelector(".run-fields");
+        const addRunButton = document.getElementById("add-run");
+        const removeRunButton = document.getElementById("remove-run");
         const shareButton = document.getElementById("share-run");
         const resetButton = document.getElementById("reset-intervals");
         const totalDistanceEl = document.getElementById("total-distance");
@@ -466,6 +570,12 @@
         if (
           !intervalsEl ||
           !addButton ||
+          !runSelect ||
+          !runNameInput ||
+          !renameRunButton ||
+          !runFields ||
+          !addRunButton ||
+          !removeRunButton ||
           !shareButton ||
           !resetButton ||
           !totalDistanceEl ||
@@ -477,6 +587,8 @@
 
         let intervalCount = 0;
         let isRestoring = false;
+        let runs = [];
+        let activeRunId = null;
 
         const storage = {
           load() {
@@ -519,7 +631,13 @@
           try {
             const json = decodeURIComponent(atob(value));
             const parsed = JSON.parse(json);
-            return Array.isArray(parsed) ? parsed : null;
+            if (Array.isArray(parsed)) {
+              return { runs: [{ id: crypto.randomUUID(), name: "Run 1", intervals: parsed }], activeRunId: null };
+            }
+            if (parsed && Array.isArray(parsed.runs)) {
+              return parsed;
+            }
+            return null;
           } catch (error) {
             return null;
           }
@@ -556,6 +674,64 @@
           const totalSeconds = minutes * 60 + seconds;
           const normalized = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
           return { totalSeconds, normalized };
+        };
+
+        const createRun = (name, intervals = null) => ({
+          id: crypto.randomUUID(),
+          name,
+          intervals: intervals ?? [],
+        });
+
+        const defaultIntervals = () => [
+          { name: "Interval 1", time: "00:00", speed: 0 },
+          { name: "Interval 2", time: "00:00", speed: 0 },
+        ];
+
+        const getActiveRun = () => runs.find((run) => run.id === activeRunId) ?? null;
+
+        const persistActiveRun = () => {
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            return;
+          }
+          activeRun.intervals = collectIntervals();
+        };
+
+        const updateRunSelect = () => {
+          runSelect.innerHTML = "";
+          runs.forEach((run, index) => {
+            const option = document.createElement("option");
+            option.value = run.id;
+            option.textContent = run.name || `Run ${index + 1}`;
+            runSelect.appendChild(option);
+          });
+          const activeRun = getActiveRun();
+          if (activeRun) {
+            runSelect.value = activeRun.id;
+            runNameInput.value = activeRun.name || "";
+          }
+          removeRunButton.disabled = runs.length <= 1;
+        };
+
+        const renderRunIntervals = (intervals) => {
+          intervalsEl.innerHTML = "";
+          intervalCount = 0;
+          isRestoring = true;
+          intervals.forEach((interval) => addInterval(interval));
+          isRestoring = false;
+          updateRowLabels();
+          updateTotals();
+        };
+
+        const setActiveRun = (runId) => {
+          activeRunId = runId;
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            return;
+          }
+          runNameInput.value = activeRun.name || "";
+          renderRunIntervals(activeRun.intervals.length ? activeRun.intervals : defaultIntervals());
+          updateRunSelect();
         };
 
         const buildRow = () => {
@@ -704,7 +880,8 @@
           totalDistanceEl.textContent = formatDistance(totalDistance);
           totalTimeEl.textContent = formatTime(totalSeconds);
           if (!isRestoring) {
-            storage.save(collectIntervals());
+            persistActiveRun();
+            storage.save({ runs, activeRunId });
           }
         };
 
@@ -735,39 +912,59 @@
         };
 
         const resetIntervals = () => {
-          intervalsEl.innerHTML = "";
-          intervalCount = 0;
-          storage.clear();
-          addInterval();
-          addInterval();
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            return;
+          }
+          activeRun.intervals = defaultIntervals();
+          renderRunIntervals(activeRun.intervals);
+          storage.save({ runs, activeRunId });
         };
 
         const loadIntervals = () => {
           const params = new URLSearchParams(window.location.search);
           const shared = params.get(SHARE_PARAM);
           const decoded = shared ? decodeIntervals(shared) : null;
-          if (decoded && decoded.length) {
-            intervalsEl.innerHTML = "";
-            intervalCount = 0;
-            isRestoring = true;
-            decoded.forEach((interval) => addInterval(interval));
-            isRestoring = false;
-            updateRowLabels();
-            updateTotals();
+          if (decoded && Array.isArray(decoded.runs) && decoded.runs.length) {
+            runs = decoded.runs.map((run, index) => ({
+              id: run.id || crypto.randomUUID(),
+              name: run.name || `Run ${index + 1}`,
+              intervals: Array.isArray(run.intervals) ? run.intervals : [],
+            }));
+            activeRunId = decoded.activeRunId && runs.some((run) => run.id === decoded.activeRunId)
+              ? decoded.activeRunId
+              : runs[0].id;
+            updateRunSelect();
+            setActiveRun(activeRunId);
             return true;
           }
           const saved = storage.load();
-          if (!Array.isArray(saved) || saved.length === 0) {
+          if (!saved) {
             return false;
           }
-          intervalsEl.innerHTML = "";
-          intervalCount = 0;
-          isRestoring = true;
-          saved.forEach((interval) => addInterval(interval));
-          isRestoring = false;
-          updateRowLabels();
-          updateTotals();
-          return true;
+          if (Array.isArray(saved)) {
+            const run = createRun("Run 1", saved);
+            runs = [run];
+            activeRunId = run.id;
+            updateRunSelect();
+            setActiveRun(activeRunId);
+            storage.save({ runs, activeRunId });
+            return true;
+          }
+          if (Array.isArray(saved.runs) && saved.runs.length) {
+            runs = saved.runs.map((run, index) => ({
+              id: run.id || crypto.randomUUID(),
+              name: run.name || `Run ${index + 1}`,
+              intervals: Array.isArray(run.intervals) ? run.intervals : [],
+            }));
+            activeRunId = saved.activeRunId && runs.some((run) => run.id === saved.activeRunId)
+              ? saved.activeRunId
+              : runs[0].id;
+            updateRunSelect();
+            setActiveRun(activeRunId);
+            return true;
+          }
+          return false;
         };
 
         intervalsEl.addEventListener("input", (event) => {
@@ -893,9 +1090,80 @@
         });
         resetButton.addEventListener("click", resetIntervals);
 
+        addRunButton.addEventListener("click", () => {
+          persistActiveRun();
+          const nextIndex = runs.length + 1;
+          const run = createRun(`Run ${nextIndex}`, defaultIntervals());
+          runs.push(run);
+          activeRunId = run.id;
+          updateRunSelect();
+          setActiveRun(activeRunId);
+          storage.save({ runs, activeRunId });
+        });
+
+        removeRunButton.addEventListener("click", () => {
+          if (runs.length <= 1) {
+            return;
+          }
+          const currentIndex = runs.findIndex((run) => run.id === activeRunId);
+          runs = runs.filter((run) => run.id !== activeRunId);
+          const nextRun = runs[currentIndex] || runs[currentIndex - 1] || runs[0];
+          activeRunId = nextRun ? nextRun.id : null;
+          updateRunSelect();
+          if (activeRunId) {
+            setActiveRun(activeRunId);
+          }
+          storage.save({ runs, activeRunId });
+        });
+
+        runSelect.addEventListener("change", (event) => {
+          if (!(event.target instanceof HTMLSelectElement)) {
+            return;
+          }
+          persistActiveRun();
+          activeRunId = event.target.value;
+          setActiveRun(activeRunId);
+          storage.save({ runs, activeRunId });
+        });
+
+        const startRename = () => {
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            return;
+          }
+          runNameInput.value = activeRun.name || "";
+          runFields.classList.add("is-renaming");
+          runNameInput.focus();
+          runNameInput.select();
+        };
+
+        const finishRename = () => {
+          const activeRun = getActiveRun();
+          if (!activeRun) {
+            return;
+          }
+          const nextName = runNameInput.value.trim();
+          if (nextName) {
+            activeRun.name = nextName;
+          }
+          runFields.classList.remove("is-renaming");
+          updateRunSelect();
+          storage.save({ runs, activeRunId });
+        };
+
+        renameRunButton.addEventListener("click", startRename);
+        runNameInput.addEventListener("blur", finishRename);
+        runNameInput.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") {
+            return;
+          }
+          event.preventDefault();
+          finishRename();
+        });
+
         shareButton.addEventListener("click", async () => {
-          const data = collectIntervals();
-          const encoded = encodeIntervals(data);
+          persistActiveRun();
+          const encoded = encodeIntervals({ runs, activeRunId });
           if (!encoded) {
             shareStatusEl.textContent = "Unable to create a shareable link.";
             return;
@@ -916,7 +1184,12 @@
         });
 
         if (!loadIntervals()) {
-          resetIntervals();
+          const run = createRun("Run 1", defaultIntervals());
+          runs = [run];
+          activeRunId = run.id;
+          updateRunSelect();
+          setActiveRun(activeRunId);
+          storage.save({ runs, activeRunId });
         }
       })();
     </script>
