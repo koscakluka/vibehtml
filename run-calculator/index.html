@@ -97,6 +97,9 @@
       }
 
       .summary {
+        position: sticky;
+        top: 16px;
+        z-index: 1;
         background: var(--panel);
         border: 1px solid var(--stroke);
         border-radius: var(--radius);
@@ -338,6 +341,10 @@
       }
 
       @media (max-width: 860px) {
+        .summary {
+          top: 12px;
+        }
+
         .interval-row {
           grid-template-columns: 1fr 1fr;
         }
@@ -377,20 +384,21 @@
             the full distance and total run time.
           </p>
         </div>
-        <section class="summary" aria-live="polite">
-          <h2>Total output</h2>
-          <div class="summary-grid">
-            <div class="metric">
-              <span class="label">Total distance</span>
-              <span class="value" id="total-distance">0.00 km</span>
-            </div>
-            <div class="metric">
-              <span class="label">Total time</span>
-              <span class="value" id="total-time">00:00:00</span>
-            </div>
-          </div>
-        </section>
       </header>
+
+      <section class="summary" aria-live="polite">
+        <h2>Total output</h2>
+        <div class="summary-grid">
+          <div class="metric">
+            <span class="label">Total distance</span>
+            <span class="value" id="total-distance">0.00 km</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total time</span>
+            <span class="value" id="total-time">00:00:00</span>
+          </div>
+        </div>
+      </section>
 
       <section class="panel" aria-label="Intervals list">
         <div class="panel-header">
