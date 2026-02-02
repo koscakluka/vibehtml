@@ -16,6 +16,10 @@ Published to GitHub Pages so I can access them anywhere.
 - No build step required
 - `index.html` is the landing page for the repo
 
+## Pages
+
+- `run-calculator/` - interval run distance and time calculator
+
 ## Publishing
 
 This repo is intended to be served via GitHub Pages.

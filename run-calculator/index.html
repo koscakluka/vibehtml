@@ -1,0 +1,650 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run Calculator</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f1e8;
+        --bg-deep: #e8ddcc;
+        --ink: #1e1c18;
+        --muted: #5d5346;
+        --accent: #c1542b;
+        --accent-soft: #e3b59d;
+        --panel: #fff8ef;
+        --stroke: #dccdbb;
+        --success: #2f6b4f;
+        --shadow: 0 20px 50px rgba(39, 29, 18, 0.12);
+        --radius: 20px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        color: var(--ink);
+        background: radial-gradient(circle at top right, #f9dcc5 0%, transparent 50%),
+          radial-gradient(circle at 20% 20%, #f8f2e7 0%, transparent 55%),
+          linear-gradient(145deg, var(--bg) 0%, var(--bg-deep) 100%);
+        min-height: 100vh;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        inset: auto;
+        width: 260px;
+        height: 260px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(193, 84, 43, 0.25), transparent 70%);
+        filter: blur(2px);
+        z-index: 0;
+      }
+
+      body::before {
+        top: -80px;
+        left: -60px;
+      }
+
+      body::after {
+        bottom: -90px;
+        right: -40px;
+      }
+
+      main {
+        position: relative;
+        z-index: 1;
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 48px 24px 64px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 24px;
+        align-items: center;
+        animation: rise 700ms ease both;
+      }
+
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin: 0 0 12px;
+      }
+
+      h1 {
+        margin: 0 0 12px;
+        font-size: clamp(2rem, 3vw, 2.6rem);
+        line-height: 1.1;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      .summary {
+        background: var(--panel);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 20px 24px;
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 12px;
+      }
+
+      .summary h2 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #fff;
+        border: 1px solid var(--stroke);
+      }
+
+      .metric span {
+        display: block;
+      }
+
+      .metric .label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .metric .value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--success);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius);
+        padding: 24px;
+        box-shadow: var(--shadow);
+        display: grid;
+        gap: 20px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .panel-header h2 {
+        margin: 0;
+        font-size: 1.3rem;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      button {
+        font-family: inherit;
+        border-radius: 999px;
+        border: 1px solid var(--accent);
+        background: var(--accent);
+        color: #fff;
+        padding: 10px 16px;
+        cursor: pointer;
+        font-size: 0.95rem;
+        transition: transform 150ms ease, box-shadow 150ms ease;
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--accent);
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgba(193, 84, 43, 0.35);
+        outline-offset: 2px;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(193, 84, 43, 0.2);
+      }
+
+      .intervals {
+        display: grid;
+        gap: 16px;
+      }
+
+      .interval-row {
+        display: grid;
+        grid-template-columns: minmax(120px, 1fr) repeat(3, minmax(130px, 1fr)) auto;
+        gap: 8px;
+        align-items: end;
+        padding: 8px;
+        border-radius: 16px;
+        border: 1px solid var(--stroke);
+        background: #fff;
+        animation: rise 500ms ease both;
+      }
+
+      .interval-name input {
+        font-weight: 600;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .field label {
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      input {
+        font-family: inherit;
+        padding: 6px 8px;
+        border-radius: 12px;
+        border: 1px solid var(--stroke);
+        background: #fdfbf7;
+        font-size: 0.9rem;
+      }
+
+      input:focus-visible {
+        outline: 2px solid rgba(193, 84, 43, 0.35);
+        outline-offset: 1px;
+      }
+
+      .distance-output {
+        padding: 6px 8px;
+        border-radius: 12px;
+        border: 1px dashed var(--stroke);
+        background: #fffaf3;
+      }
+
+      .distance-output .value {
+        font-size: 1.05rem;
+        font-weight: 600;
+      }
+
+      .remove-btn {
+        border: 1px solid transparent;
+        background: #f7eee6;
+        color: var(--muted);
+        padding: 10px 14px;
+      }
+
+      .row-actions {
+        display: flex;
+        flex-direction: row;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .row-actions button {
+        width: 100%;
+        padding: 6px 10px;
+        font-size: 0.85rem;
+      }
+
+      .icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        min-width: 36px;
+      }
+
+      .icon-button svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 860px) {
+        .interval-row {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .interval-tag {
+          grid-column: 1 / -1;
+        }
+      }
+
+      @media (max-width: 600px) {
+        main {
+          padding: 32px 18px 48px;
+        }
+
+        .interval-row {
+          grid-template-columns: 1fr;
+        }
+
+        button {
+          width: 100%;
+        }
+
+        .actions {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Run calculator</p>
+          <h1>Plan interval runs without the math.</h1>
+          <p>
+            Add each interval with its duration and speed. The totals update instantly so you can spot
+            the full distance and total run time.
+          </p>
+        </div>
+        <section class="summary" aria-live="polite">
+          <h2>Total output</h2>
+          <div class="summary-grid">
+            <div class="metric">
+              <span class="label">Total distance</span>
+              <span class="value" id="total-distance">0.00 km</span>
+            </div>
+            <div class="metric">
+              <span class="label">Total time</span>
+              <span class="value" id="total-time">00:00:00</span>
+            </div>
+          </div>
+        </section>
+      </header>
+
+      <section class="panel" aria-label="Intervals list">
+        <div class="panel-header">
+          <h2>Your intervals</h2>
+          <div class="actions">
+            <button type="button" class="icon-button" id="add-interval" aria-label="Add interval" title="Add interval">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="secondary icon-button"
+              id="reset-intervals"
+              aria-label="Reset intervals"
+              title="Reset intervals"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="1 4 1 10 7 10" />
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="intervals" id="intervals"></div>
+        <p class="note">Tip: time uses mm:ss (seconds capped at 59); speed is in kilometers per hour.</p>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        const intervalsEl = document.getElementById("intervals");
+        const addButton = document.getElementById("add-interval");
+        const resetButton = document.getElementById("reset-intervals");
+        const totalDistanceEl = document.getElementById("total-distance");
+        const totalTimeEl = document.getElementById("total-time");
+
+        if (
+          !intervalsEl ||
+          !addButton ||
+          !resetButton ||
+          !totalDistanceEl ||
+          !totalTimeEl
+        ) {
+          return;
+        }
+
+        let intervalCount = 0;
+
+        const formatTime = (totalSeconds) => {
+          const safeSeconds = Math.max(0, Math.round(totalSeconds));
+          const hours = Math.floor(safeSeconds / 3600);
+          const minutes = Math.floor((safeSeconds % 3600) / 60);
+          const seconds = safeSeconds % 60;
+          return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(
+            seconds
+          ).padStart(2, "0")}`;
+        };
+
+        const formatDistance = (distance) => `${distance.toFixed(2)} km`;
+
+        const sanitizeNumber = (value, min = 0, max = Infinity) => {
+          const parsed = Number.parseFloat(value);
+          if (Number.isNaN(parsed)) {
+            return 0;
+          }
+          return Math.min(max, Math.max(min, parsed));
+        };
+
+        const parseTimeInput = (value) => {
+          const cleaned = String(value).trim();
+          if (!cleaned) {
+            return { totalSeconds: 0, normalized: "00:00" };
+          }
+          const parts = cleaned.split(":");
+          const minutes = Math.floor(sanitizeNumber(parts[0] ?? "0", 0));
+          const seconds = Math.floor(sanitizeNumber(parts[1] ?? "0", 0, 59));
+          const totalSeconds = minutes * 60 + seconds;
+          const normalized = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+          return { totalSeconds, normalized };
+        };
+
+        const buildRow = () => {
+          intervalCount += 1;
+          const row = document.createElement("div");
+          row.className = "interval-row";
+          row.style.animationDelay = `${intervalCount * 70}ms`;
+          row.dataset.index = String(intervalCount);
+          row.innerHTML = `
+            <div class="field interval-name">
+              <label for="name-${intervalCount}">Interval name</label>
+              <input
+                id="name-${intervalCount}"
+                data-field="name"
+                type="text"
+                placeholder="Interval ${intervalCount}"
+                value="Interval ${intervalCount}"
+              />
+            </div>
+            <div class="field">
+              <label for="time-${intervalCount}">Time (mm:ss)</label>
+              <input
+                id="time-${intervalCount}"
+                data-field="time"
+                type="text"
+                inputmode="numeric"
+                placeholder="mm:ss"
+                value="00:00"
+              />
+            </div>
+            <div class="field">
+              <label for="speed-${intervalCount}">Speed (km/h)</label>
+              <input id="speed-${intervalCount}" data-field="speed" type="number" min="0" step="0.1" value="0" />
+            </div>
+            <div class="field distance-output">
+              <span class="label">Distance</span>
+              <span class="value" data-field="distance">0.00 km</span>
+            </div>
+            <div class="row-actions">
+              <button
+                type="button"
+                class="secondary icon-button"
+                data-action="duplicate"
+                aria-label="Duplicate interval"
+                title="Duplicate interval"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="remove-btn icon-button"
+                data-action="remove"
+                aria-label="Remove interval"
+                title="Remove interval"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          `;
+          return row;
+        };
+
+        const updateRowLabels = () => {
+          const rows = Array.from(intervalsEl.querySelectorAll(".interval-row"));
+          rows.forEach((row, index) => {
+            const nameInput = row.querySelector('[data-field="name"]');
+            const nextLabel = `Interval ${index + 1}`;
+            if (nameInput instanceof HTMLInputElement) {
+              if (!nameInput.value || /^Interval \d+$/.test(nameInput.value)) {
+                nameInput.value = nextLabel;
+              }
+              nameInput.placeholder = nextLabel;
+            }
+            row.dataset.index = String(index + 1);
+          });
+        };
+
+        const updateTotals = () => {
+          const rows = Array.from(intervalsEl.querySelectorAll(".interval-row"));
+          let totalSeconds = 0;
+          let totalDistance = 0;
+
+          rows.forEach((row) => {
+            const timeInput = row.querySelector('[data-field="time"]');
+            const speedInput = row.querySelector('[data-field="speed"]');
+            const distanceEl = row.querySelector('[data-field="distance"]');
+
+            if (!timeInput || !speedInput || !distanceEl) {
+              return;
+            }
+
+            const speed = sanitizeNumber(speedInput.value, 0);
+            if (Number(speedInput.value) !== speed) {
+              speedInput.value = String(speed);
+            }
+
+            const timeInfo = parseTimeInput(timeInput.value);
+            const intervalSeconds = timeInfo.totalSeconds;
+            const intervalDistance = (intervalSeconds / 3600) * speed;
+
+            totalSeconds += intervalSeconds;
+            totalDistance += intervalDistance;
+
+            distanceEl.textContent = formatDistance(intervalDistance);
+          });
+
+          totalDistanceEl.textContent = formatDistance(totalDistance);
+          totalTimeEl.textContent = formatTime(totalSeconds);
+        };
+
+        const addInterval = (values = null, insertAfter = null) => {
+          const row = buildRow();
+          if (insertAfter && insertAfter.parentElement === intervalsEl) {
+            insertAfter.insertAdjacentElement("afterend", row);
+          } else {
+            intervalsEl.appendChild(row);
+          }
+          if (values) {
+            const nameInput = row.querySelector('[data-field="name"]');
+            const timeInput = row.querySelector('[data-field="time"]');
+            const speedInput = row.querySelector('[data-field="speed"]');
+
+            if (nameInput) {
+              nameInput.value = String(values.name ?? nameInput.value);
+            }
+            if (timeInput) {
+              timeInput.value = String(values.time ?? "00:00");
+            }
+            if (speedInput) {
+              speedInput.value = String(values.speed ?? 0);
+            }
+          }
+          updateTotals();
+          return row;
+        };
+
+        const resetIntervals = () => {
+          intervalsEl.innerHTML = "";
+          intervalCount = 0;
+          addInterval();
+          addInterval();
+        };
+
+        intervalsEl.addEventListener("input", (event) => {
+          if (event.target instanceof HTMLInputElement) {
+            updateTotals();
+          }
+        });
+
+        intervalsEl.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) {
+            return;
+          }
+          const actionButton = target.closest("[data-action]");
+          if (!(actionButton instanceof Element)) {
+            return;
+          }
+          if (actionButton.dataset.action === "remove") {
+            const row = actionButton.closest(".interval-row");
+            if (row) {
+              row.remove();
+              updateRowLabels();
+              updateTotals();
+            }
+          }
+          if (actionButton.dataset.action === "duplicate") {
+            const row = actionButton.closest(".interval-row");
+            if (!row) {
+              return;
+            }
+            const nameInput = row.querySelector('[data-field="name"]');
+            const timeInput = row.querySelector('[data-field="time"]');
+            const speedInput = row.querySelector('[data-field="speed"]');
+
+            const timeInfo = parseTimeInput(timeInput?.value ?? "");
+            const speed = sanitizeNumber(speedInput?.value ?? "0", 0);
+
+            addInterval({
+              name: nameInput?.value ?? "",
+              time: timeInfo.normalized,
+              speed,
+            }, row);
+          }
+        });
+
+        addButton.addEventListener("click", addInterval);
+        resetButton.addEventListener("click", resetIntervals);
+
+        resetIntervals();
+      })();
+    </script>
+  </body>
+</html>
