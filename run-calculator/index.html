@@ -205,7 +205,7 @@
 
       .interval-row {
         display: grid;
-        grid-template-columns: minmax(120px, 1fr) repeat(3, minmax(130px, 1fr)) auto;
+        grid-template-columns: auto minmax(120px, 1fr) repeat(3, minmax(130px, 1fr)) auto;
         gap: 8px;
         align-items: end;
         padding: 8px;
@@ -294,6 +294,30 @@
         stroke-width: 2;
         stroke-linecap: round;
         stroke-linejoin: round;
+      }
+
+      .drag-handle {
+        cursor: grab;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid transparent;
+      }
+
+      .drag-handle:active {
+        cursor: grabbing;
+      }
+
+      .interval-row.is-dragging {
+        opacity: 0.6;
+        box-shadow: 0 12px 24px rgba(39, 29, 18, 0.12);
+      }
+
+      .interval-row.drop-before {
+        box-shadow: inset 0 3px 0 rgba(193, 84, 43, 0.7);
+      }
+
+      .interval-row.drop-after {
+        box-shadow: inset 0 -3px 0 rgba(193, 84, 43, 0.7);
       }
 
       .note {
@@ -393,7 +417,7 @@
           </div>
         </div>
         <div class="intervals" id="intervals"></div>
-        <p class="note">Tip: time uses mm:ss (seconds capped at 59); speed is in kilometers per hour.</p>
+        <p class="note">Tip: drag the grip to reorder; time uses mm:ss (seconds capped at 59); speed is in kilometers per hour.</p>
       </section>
     </main>
 
@@ -457,6 +481,24 @@
           row.style.animationDelay = `${intervalCount * 70}ms`;
           row.dataset.index = String(intervalCount);
           row.innerHTML = `
+            <div class="row-actions">
+              <button
+                type="button"
+                class="drag-handle icon-button"
+                draggable="true"
+                aria-label="Drag to reorder"
+                title="Drag to reorder"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="8" cy="6" r="1.6" fill="currentColor" stroke="none" />
+                  <circle cx="16" cy="6" r="1.6" fill="currentColor" stroke="none" />
+                  <circle cx="8" cy="12" r="1.6" fill="currentColor" stroke="none" />
+                  <circle cx="16" cy="12" r="1.6" fill="currentColor" stroke="none" />
+                  <circle cx="8" cy="18" r="1.6" fill="currentColor" stroke="none" />
+                  <circle cx="16" cy="18" r="1.6" fill="currentColor" stroke="none" />
+                </svg>
+              </button>
+            </div>
             <div class="field interval-name">
               <label for="name-${intervalCount}">Interval name</label>
               <input
@@ -601,6 +643,78 @@
           if (event.target instanceof HTMLInputElement) {
             updateTotals();
           }
+        });
+
+        let draggingRow = null;
+
+        const clearDropIndicators = () => {
+          intervalsEl
+            .querySelectorAll(".drop-before, .drop-after")
+            .forEach((row) => row.classList.remove("drop-before", "drop-after"));
+        };
+
+        intervalsEl.addEventListener("dragstart", (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) {
+            return;
+          }
+          const handle = target.closest(".drag-handle");
+          if (!handle) {
+            return;
+          }
+          const row = handle.closest(".interval-row");
+          if (!row) {
+            return;
+          }
+          draggingRow = row;
+          row.classList.add("is-dragging");
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", "");
+          }
+        });
+
+        intervalsEl.addEventListener("dragover", (event) => {
+          if (!draggingRow) {
+            return;
+          }
+          event.preventDefault();
+          if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = "move";
+          }
+          const target = event.target instanceof Element ? event.target.closest(".interval-row") : null;
+          clearDropIndicators();
+          if (!target || target === draggingRow) {
+            return;
+          }
+          const rect = target.getBoundingClientRect();
+          const shouldInsertBefore = event.clientY < rect.top + rect.height / 2;
+          target.classList.add(shouldInsertBefore ? "drop-before" : "drop-after");
+        });
+
+        intervalsEl.addEventListener("drop", (event) => {
+          if (!draggingRow) {
+            return;
+          }
+          event.preventDefault();
+          const target = event.target instanceof Element ? event.target.closest(".interval-row") : null;
+          if (!target) {
+            intervalsEl.appendChild(draggingRow);
+          } else if (target !== draggingRow) {
+            const rect = target.getBoundingClientRect();
+            const shouldInsertBefore = event.clientY < rect.top + rect.height / 2;
+            intervalsEl.insertBefore(draggingRow, shouldInsertBefore ? target : target.nextSibling);
+          }
+          updateRowLabels();
+          clearDropIndicators();
+        });
+
+        intervalsEl.addEventListener("dragend", () => {
+          if (draggingRow) {
+            draggingRow.classList.remove("is-dragging");
+          }
+          clearDropIndicators();
+          draggingRow = null;
         });
 
         intervalsEl.addEventListener("click", (event) => {
